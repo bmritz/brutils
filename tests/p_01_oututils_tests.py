@@ -1,4 +1,4 @@
-import ..oututils as out
+from .. import oututils as out
 import unittest
 import os
 

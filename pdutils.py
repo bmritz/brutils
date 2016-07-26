@@ -33,9 +33,9 @@ def normalize(df, axis=None):
     if axis is None:
         return df.div(df.sum().sum())
     elif axis==0:
-        return df.div(df.sum(axis=1), axis=0)
-    elif axis==1:
         return df.div(df.sum(axis=0), axis=1)
+    elif axis==1:
+        return df.div(df.sum(axis=1), axis=0)
 
 
 # def norm_horz(df):

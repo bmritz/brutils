@@ -33,10 +33,11 @@ def normalize(df, axis=None):
     if axis is None:
         return df.div(df.sum().sum())
     elif axis==0:
-        return df.div(df.sum(axis=1), axis=0)
-    elif axis==1:
         return df.div(df.sum(axis=0), axis=1)
-
+    elif axis==1:
+        return df.div(df.sum(axis=1), axis=0)
+    else:
+        raise ValueError "axis parameter must be None, 0, or 1"
 
 # def norm_horz(df):
 #     """
@@ -49,3 +50,12 @@ def normalize(df, axis=None):
 #     return df.div(df.sum(axis=0), axis=1)
 
 
+def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y"), copy=True, indicator=False):
+    """
+    Merge two dataframes on their index when they both have a multindex
+    indexes must have the same names to be merged
+    index of result will be the overlap of both indicies in the order of the left index
+    """
+    index_names = [name for name in left.index.names if name in right.index.names]
+    return pd.merge(left.reset_index(), right.reset_index(), 
+            how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)).set_index(index_names)

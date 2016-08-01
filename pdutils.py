@@ -3,6 +3,8 @@ This module holds helper functions for use with the pandas package
 """
 
 import pandas as pd
+import logging
+
 
 def printall(df, max_rows = 999):
     """prints the entire dataframe (up to max_rows) and returns to original context"""
@@ -59,3 +61,30 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
     index_names = [name for name in left.index.names if name in right.index.names]
     return pd.merge(left.reset_index(), right.reset_index(), 
             how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)).set_index(index_names)
+
+DOLLAR = "${:,.2f}".format
+WHOLE = "{:,.0f}".format
+PCT = "{:,.0f}%".format
+
+def fmt_col(df, colname):
+    if df[colname].dtype == 'O':
+        logging.debug("The column was dtype 'O', returning original column")
+        return df[colname]
+    else:
+        if 'per' in colname:
+            checkstr = colname.split('per')[0]
+        elif '/' in colname:
+            checkstr = colname.split('/')
+        else:
+            checkstr = colname
+
+        if 'sales' in checkstr.lower():
+            # return the sales format
+            return df[colname].map(SALES)
+        elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer']):
+            # return whole format
+            return df[colname].map(WHOLE)
+        elif any(x, in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
+            assert (df[colname]<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
+            # return percentage format
+            return df[colname].map(PCT)

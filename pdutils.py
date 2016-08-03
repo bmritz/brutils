@@ -91,9 +91,13 @@ def fmt_col(df, colname):
             return df[colname].map(PCT)
 
 
-def chunk_col_values(filename, column, delimiter=",", sorted=True):
+def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
     """
     returns an iterator that chunks the file on a column value
+
+    TODO: 
+    Progress bar
+
     """
 
     # iterate through the column and construct a dict of the start and end indexes
@@ -111,15 +115,17 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True):
             first = rownum
             prev_row = reader.next()
             prev_key = tuple([prev_row[c] for c in colnums])
+            i = 1
             for row in reader:
                 rownum+=1
                 key = tuple([row[c] for c in colnums])
                 if key != prev_key:
-                    last = rownum-1
-                    yield pd.read_csv(filename, delimiter=delimiter, names=colnames, skiprows=first, nrows=last-first+1, header=0)
-                    first = rownum
-                # first, last = index_dict.setdefault(key, (rownum,rownum))
-                # index_dict[key] = (first, rownum)
+                    i+=1
+                    if i > maxkeys:
+                        last = rownum-1
+                        i = 1
+                        yield pd.read_csv(filename, delimiter=delimiter, names=colnames, skiprows=first, nrows=last-first+1, header=0)
+                        first = rownum
                 prev_key = key
         else:
             raise NotImplementedError

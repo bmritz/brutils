@@ -3,6 +3,7 @@ This module holds helper functions for use with the pandas package
 """
 
 import pandas as pd
+import collections
 import logging
 
 
@@ -88,3 +89,29 @@ def fmt_col(df, colname):
             assert (df[colname]<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
             # return percentage format
             return df[colname].map(PCT)
+
+
+def chunk_col_values(filename, column, delimiter=",", sorted=True):
+    """
+    returns an iterator that chunks the file on a column value
+    """
+
+    # iterate through the column and construct a dict of the start and end indexes
+    with open(filename, 'r') as f:
+        reader = csv.reader(f, delimiter=delimiter) 
+        rownum = 0
+        index_dict = collections.OrderedDict()
+        # index_dict = collections.defaultdict(lambda: [None,None])
+        colnames = reader.next()
+        colnum = colnames.index(column)
+        if sorted:
+            for row in reader:
+                first, last = index_dict.setdefault(row[colnum], (rownum,rownum))
+                index_dict[row[colnum]] = (first, rownum)
+                rownum += 1
+        else:
+            raise NotImplementedError
+
+    return (pd.read_csv(filename, delimiter=delimiter, names = colnames, skiprows=first, nrows=last-first+1, header=0)\
+     for first, last in index_dict.values())
+

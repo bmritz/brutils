@@ -97,21 +97,29 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True):
     """
 
     # iterate through the column and construct a dict of the start and end indexes
+    if isinstance(column, str):
+        column = [column]
+
     with open(filename, 'r') as f:
         reader = csv.reader(f, delimiter=delimiter) 
         rownum = 0
-        index_dict = collections.OrderedDict()
         # index_dict = collections.defaultdict(lambda: [None,None])
         colnames = reader.next()
-        colnum = colnames.index(column)
+        colnums = [colnames.index(c) for c in colnames if c in column]
+
         if sorted:
+            first = rownum
+            prev_row = reader.next()
+            prev_key = tuple([prev_row[c] for c in colnums])
             for row in reader:
-                first, last = index_dict.setdefault(row[colnum], (rownum,rownum))
-                index_dict[row[colnum]] = (first, rownum)
-                rownum += 1
+                rownum+=1
+                key = tuple([row[c] for c in colnums])
+                if key != prev_key:
+                    last = rownum-1
+                    yield pd.read_csv(filename, delimiter=delimiter, names=colnames, skiprows=first, nrows=last-first+1, header=0)
+                    first = rownum
+                # first, last = index_dict.setdefault(key, (rownum,rownum))
+                # index_dict[key] = (first, rownum)
+                prev_key = key
         else:
             raise NotImplementedError
-
-    return (pd.read_csv(filename, delimiter=delimiter, names = colnames, skiprows=first, nrows=last-first+1, header=0)\
-     for first, last in index_dict.values())
-

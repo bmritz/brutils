@@ -40,7 +40,7 @@ def normalize(df, axis=None):
     elif axis==1:
         return df.div(df.sum(axis=1), axis=0)
     else:
-        raise ValueError "axis parameter must be None, 0, or 1"
+        raise ValueError, "axis parameter must be None, 0, or 1"
 
 # def norm_horz(df):
 #     """
@@ -61,7 +61,7 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
     """
     index_names = [name for name in left.index.names if name in right.index.names]
     return pd.merge(left.reset_index(), right.reset_index(), 
-            how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)).set_index(index_names)
+            how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator).set_index(index_names)
 
 DOLLAR = "${:,.2f}".format
 WHOLE = "{:,.0f}".format
@@ -115,15 +115,15 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
             first = rownum
             prev_row = reader.next()
             prev_key = tuple([prev_row[c] for c in colnums])
-            i = 1
+            i = 0
             for row in reader:
                 rownum+=1
                 key = tuple([row[c] for c in colnums])
                 if key != prev_key:
                     i+=1
-                    if i > maxkeys:
+                    if i >= maxkeys:
                         last = rownum-1
-                        i = 1
+                        i = 0
                         yield pd.read_csv(filename, delimiter=delimiter, names=colnames, skiprows=first, nrows=last-first+1, header=0)
                         first = rownum
                 prev_key = key

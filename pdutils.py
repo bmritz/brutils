@@ -65,12 +65,31 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
 
 DOLLAR = "${:,.2f}".format
 WHOLE = "{:,.0f}".format
-PCT = "{:,.0f}%".format
+PCT = "{:.0%}".format
 
-def fmt_col(df, colname):
-    if df[colname].dtype == 'O':
-        logging.debug("The column was dtype 'O', returning original column")
-        return df[colname]
+def fmt_series_retail(series, keyword=None):
+    """
+    Parameters
+    ----------
+    series : pandas series
+        The series which you would like formatted, 
+        The name of the series will be used as the keyword if keyword is None
+        If both the name of hte series and the keyword parameter are None, the function will error
+    keyword = None: str, optional
+        The keyword that the function will attempt to match to an internal lookup to 
+        determine which type of format to use
+        Examples could be: 'Customer', 'visits', 'units'
+        Case insensitive
+        If None (default), the keyword defaults to the name of the series
+    """
+    colname = keyword or series.name
+
+    if series.dtype == 'O':
+        logging.debug("The series was dtype 'O', returning original series")
+        return series
+    elif colname is None:
+        logging.warn("There was no name for the series, and no keyword supplied, returning original series")
+        return series
     else:
         if 'per' in colname:
             checkstr = colname.split('per')[0]
@@ -79,16 +98,18 @@ def fmt_col(df, colname):
         else:
             checkstr = colname
 
-        if 'sales' in checkstr.lower():
-            # return the sales format
-            return df[colname].map(SALES)
+        if (series<=1).all():
+            return series.map(PCT)
+        elif any(x in checkstr.lower() for x in ['sales', 'spend']):
+            return series.map(DOLLAR)
         elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer']):
-            # return whole format
-            return df[colname].map(WHOLE)
-        elif any(x, in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
-            assert (df[colname]<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
-            # return percentage format
-            return df[colname].map(PCT)
+            return series.map(WHOLE)
+        elif any(x in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
+            assert (series<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
+            return series.map(PCT)
+        else:
+            logging.warn("The series name or keyword was not found in the lookup, returning original series")
+            return series
 
 
 def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):

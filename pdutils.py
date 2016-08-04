@@ -40,7 +40,7 @@ def normalize(df, axis=None):
     elif axis==1:
         return df.div(df.sum(axis=1), axis=0)
     else:
-        raise ValueError "axis parameter must be None, 0, or 1"
+        raise ValueError, "axis parameter must be None, 0, or 1"
 
 # def norm_horz(df):
 #     """

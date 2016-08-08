@@ -42,16 +42,6 @@ def normalize(df, axis=None):
     else:
         raise ValueError, "axis parameter must be None, 0, or 1"
 
-# def norm_horz(df):
-#     """
-#     Normalize each
-#     assert np.all(df>=0), "DataFrame input into norm_horz must have all elements >=0"
-#     return df.div(df.sum(axis=1), axis=0)
-
-# def norm_vert(df):
-#     assert np.all(df>=0), "DataFrame input into norm_vert must have all elements >=0"
-#     return df.div(df.sum(axis=0), axis=1)
-
 
 def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y"), copy=True, indicator=False):
     """

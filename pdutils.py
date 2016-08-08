@@ -12,6 +12,38 @@ def printall(df, max_rows = 999):
     with pd.option_context('display.max_rows', 999):
         print df
 
+
+def to_html_float_left(dfs, titles=None, padding_left=10):
+    """
+    Show dataframes side by side using the float:left style of divs
+    
+    Args:
+    dfs: list of dataframes to show
+    titles: (optional) list of strings that represent the titles of the dataframes,
+                if supplied, must be same length as dfs
+    padding_left: the padding between the dataframes (px)
+                
+    Output:
+    string: the html string representing the dataframes side by side
+            wrap this string into IPython.display.HTML(<string>) to display in notebook
+    """
+    
+    if titles is not None:
+        assert len(titles)==len(dfs), "Length of titles must be same length as dfs"
+    else:
+        titles = ["DF %s" % i for i, x in enumerate(dfs)]
+    
+    html = ''
+    for i, (k, v) in enumerate(zip(titles, dfs)):
+        if i > 0:
+            p = padding_left
+        else:
+            p = 10
+        html += ('''<div style=\"float:left; padding-left:{}px;\">
+                 <strong>{}</strong>{}</div>'''
+                 .format(p, k , v.to_html()))
+    return '<div style="float:left; width:100%;">' + html + '</div>'
+
 def split_string(string_series, delim=" "):
     """
     splits the string series into multiple series based on the delimiter

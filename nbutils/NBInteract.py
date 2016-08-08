@@ -25,7 +25,7 @@ def widg_from_seq(seq):
 class NBInteract(object):
     """
     Sets up a function to be able to interact with it in an IPython notebook.
-    
+
     __init__:
         NBInteract(func)
             func: function with all variables wrapped and fixed except those you want to interact with
@@ -35,7 +35,21 @@ class NBInteract(object):
             arguments are iterables that you would like to pre-compute on
     """
     def __init__(self, func, **kwargs):
-        """kwargs are widgets that coorespond to the func"""
+        """
+
+        Allows interaction with a function in a notebook context using widgets
+
+        Args:
+            func: Function you would like to interact with
+
+            kwargs: widgets or abbreviations for widgets (see below) that can be accepted by func
+                Abbreviations:
+                    tuple will return a slider 
+                        (min, max, step)
+                        if step is omitted, it is assumed to be 0.1 if min and max are floats, otherwise 2
+                    list will return a drop down string
+                    a boolean value will return a checkbox
+        """
         self.func = func      
         self.widgets = widg_from_seq(kwargs.items())
         self.keyword_order = kwargs.keys()
@@ -61,8 +75,9 @@ class NBInteract(object):
         """
         result_key = self._kwargs_to_tuple_key(kwargs)
         if result_key not in self.cached_results:
-            self.cached_results[result_key] = self.func(**kwargs)
-        return self.cached_results[result_key]
+            # semi-colon here so the plot does not show in IPython notebooks every time
+            self.cached_results[result_key] = self.func(**kwargs); 
+        return self.cached_results[result_key];
     
     def pre_compute(self):
         ## TODO: Handle the error if get_possible_widget_values cannot get values becase not implemented
@@ -79,7 +94,7 @@ class NBInteract(object):
         for i, kword_vals in enumerate(possible_combos):
             params = dict(zip(self.keyword_order, kword_vals))
             lab.value = "Now processing parameters: %s" % ("<ul><li>" + "<li>".join(["<b>"+str(k)+":</b> "+str(v)+"</li>" for k, v in params.items()]) + "</ul>")
-            self.call_func(**params)
+            self.call_func(**params);
             f.value = i
 
     def interact(self, key=None):
@@ -99,9 +114,9 @@ class NBInteract(object):
 
         # break down to if/then clause to cut down on potentially expensive function calls
         if key is None:
-            interact(self.call_func, **dict(zip(self.keyword_order, self.widgets)))
+            dumb = interact(self.call_func, **dict(zip(self.keyword_order, self.widgets)));
         else:
             def _interact_func(**kwargs):
-                return key(self.call_func(**kwargs))
-            interact(_interact_func, **dict(zip(self.keyword_order, self.widgets)))
+                return key(self.call_func(**kwargs));
+            dumb = interact(_interact_func, **dict(zip(self.keyword_order, self.widgets)));
 

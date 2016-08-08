@@ -32,20 +32,19 @@ def sector_plot(df):
 
     num_x = len(x_labs)
     num_y = len(y_labs)
-    
 
-    fig = plt.figure(1)
-    ax = fig.add_subplot(1, 1, 1)
+    fig = plt.figure();
+    ax = fig.add_subplot(1, 1, 1);
 
     # make the grid
-    ax.set_xlim([0,num_x]); 
-    ax.set_ylim([0,num_y])
+    _dummy = ax.set_xlim([0,num_x]); 
+    _dummy = ax.set_ylim([0,num_y]);
 
     for x in range(1, num_x):
-        ax.vlines(x, 0, num_y);
+        _dummy = ax.vlines(x, 0, num_y);
 
     for y in range(1, num_y):
-        ax.hlines(y, 0, num_x)
+        _dummy = ax.hlines(y, 0, num_x);
 
     # set the ticks
     x_ticks = []
@@ -57,22 +56,15 @@ def sector_plot(df):
         y_ticks.append(float(y)-.5)
 
 
-    ax.xaxis.set_tick_params(bottom="off", top="off", right="off", left="off")
-    ax.xaxis.set_ticks(x_ticks)
-    ax.xaxis.set_ticklabels(x_labs)
-    ax.set_xlabel(x_axis_lab)
+    _dummy = ax.xaxis.set_tick_params(bottom="off", top="off", right="off", left="off");
+    _dummy = ax.xaxis.set_ticks(x_ticks);
+    _dummy = ax.xaxis.set_ticklabels(x_labs);
+    _dummy = ax.set_xlabel(x_axis_lab);
 
-    ax.yaxis.set_tick_params(bottom="off", top="off", right="off", left="off")
-    ax.yaxis.set_ticks(y_ticks)
-    ax.yaxis.set_ticklabels(y_labs)
-    ax.set_ylabel(y_axis_lab)
-
-
-    def format_value(val, decimals = 2, pct_decimals = 1):
-        if val>1:
-            return str(val)
-        else:
-            return ""
+    _dummy = ax.yaxis.set_tick_params(bottom="off", top="off", right="off", left="off");
+    _dummy = ax.yaxis.set_ticks(y_ticks);
+    _dummy = ax.yaxis.set_ticklabels(y_labs);
+    _dummy = ax.set_ylabel(y_axis_lab);
 
     for row in df.iterrows():
 
@@ -83,5 +75,5 @@ def sector_plot(df):
 
         string = "\n".join(metric+": %s" % val for metric, val in row[1].iteritems())
         x1 = ax.text(pos_x, pos_y, string, 
-                horizontalalignment='center',  verticalalignment='center')
-    return fig
+                horizontalalignment='center',  verticalalignment='center');
+    return fig;

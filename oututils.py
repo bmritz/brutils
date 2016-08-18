@@ -70,7 +70,7 @@ def output_abspath(filename, output_stem=".", output_extension='', file_prefix='
         logging.debug("The output path is: %s" % full_path)
         return full_path
 
-def au_output_path_factory(output_stem='.', output_extension='.json'):
+def au_output_path_factory(output_stem='.', output_extension='.json', subdir=""):
     """
     This outputs a function that can be called to return the full path to be output to
     This will also ensure that the output file exists, so you can write to the file
@@ -78,7 +78,7 @@ def au_output_path_factory(output_stem='.', output_extension='.json'):
     ensure_filepath(os.path.join(output_stem, 'dummy_file_not_created.txt'))
     output_pref = output_prefix()
     logging.debug("A function was created to output to %s with prefix %s and extension %s as the default" % (output_stem, output_pref, output_extension))
-    def _output_abspath(filename, output_stem=output_stem, output_extension=output_extension, file_prefix=output_pref):
+    def _output_abspath(filename, subdir=subdir, output_stem=output_stem, output_extension=output_extension, file_prefix=output_pref):
         """
         Inputs:
             filename: The informational name of the file to be written to. A prefix & suffix may be added..

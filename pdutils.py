@@ -172,3 +172,11 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
                 prev_key = key
         else:
             raise NotImplementedError
+
+
+def chunker(n, n_chunks=None, n_per_chunk=None):
+    
+    np.arange(n) // (n) / 10)
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]

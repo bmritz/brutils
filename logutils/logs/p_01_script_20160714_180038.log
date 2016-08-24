@@ -1,0 +1,12 @@
+***AU LOGGING***
+SCRIPT INFO:
+Script full path: /mnt/home/britz/projects/dslib/au_logging/p_01_script.py
+Script Git Commit hash: a12596cb033beda50d3c2e974fe488e89c35f9d8
+Script start time: 2016-07-14 18:00:38.929369
+Script called by user: britz
+Script called with no command line arguments.
+
+SCRIPT LOG:
+2016-07-14 18:00:38,931 - p_01_script.py - INFO - info msg
+2016-07-14 18:00:38,931 - p_01_script.py - DEBUG - debug msg
+2016-07-14 18:00:41,934 - p_02_support.py - INFO - this is inside the support fnx. the input was 2

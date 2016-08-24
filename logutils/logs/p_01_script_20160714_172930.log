@@ -1,0 +1,12 @@
+***AU LOGGING***
+SCRIPT INFO:
+Script full path: /mnt/home/britz/projects/dslib/au_logging/p_01_script.py
+Script was not in a git repository, no version info available.
+Script start time: 2016-07-14 17:29:30.985698
+Script called by user: britz
+Script called with no command line arguments.
+
+SCRIPT LOG:
+2016-07-14 17:29:30,987 - p_01_script.py - INFO - info msg
+2016-07-14 17:29:30,987 - p_01_script.py - DEBUG - debug msg
+2016-07-14 17:29:33,991 - p_02_support.py - INFO - this is inside the support fnx. the input was 2

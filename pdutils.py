@@ -2,10 +2,9 @@
 This module holds helper functions for use with the pandas package
 """
 
-import pandas as pd
-import collections
 import logging
-
+import pandas as pd
+import numpy as np
 
 def printall(df, max_rows = 999):
     """prints the entire dataframe (up to max_rows) and returns to original context"""
@@ -58,32 +57,29 @@ def split_string(string_series, delim=" "):
     #tups =  zip(*string_series.apply(lambda x: x.split(delim)))
     return (pd.Series(data=x, index=orig_index) for x in zip(*string_series.apply(lambda x: x.split(delim))))
 
-
 def normalize(df, axis=None):
     """
     Normalize the dataframe or group on the selected axis
-    axis = None, 0 (rows), or 1 (columns)
+    axis = None, 0 (columns), or 1 (rows)
     """
     assert np.all(df>=0), "DataFrame input into norm_vert must have all elements >=0"
+    assert axis in [None, 0, 1], "axis parameter must be either None, 0, or 1"
     if axis is None:
         return df.div(df.sum().sum())
     elif axis==0:
         return df.div(df.sum(axis=0), axis=1)
     elif axis==1:
         return df.div(df.sum(axis=1), axis=0)
-    else:
-        raise ValueError, "axis parameter must be None, 0, or 1"
-
 
 def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y"), copy=True, indicator=False):
-    """
-    Merge two dataframes on their index when they both have a multindex
-    indexes must have the same names to be merged
-    index of result will be the overlap of both indicies in the order of the left index
-    """
-    index_names = [name for name in left.index.names if name in right.index.names]
-    return pd.merge(left.reset_index(), right.reset_index(), 
-            how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator).set_index(index_names)
+        """
+        Merge two dataframes on their index when they both have a multindex
+        indexes must have the same names to be merged
+        index of result will be the overlap of both indicies in the order of the left index
+        """
+        index_names = [name for name in left.index.names if name in right.index.names]
+        return pd.merge(left.reset_index(), right.reset_index(), 
+                                how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator).set_index(index_names)
 
 DOLLAR = "${:,.2f}".format
 WHOLE = "{:,.0f}".format
@@ -112,6 +108,9 @@ def fmt_series_retail(series, keyword=None):
     elif colname is None:
         logging.warn("There was no name for the series, and no keyword supplied, returning original series")
         return series
+    elif type(colname) is not str:
+        logging.warn("The column name or keyword supplied was not a string, returning original series")
+        return series
     else:
         if 'per' in colname:
             checkstr = colname.split('per')[0]
@@ -132,7 +131,6 @@ def fmt_series_retail(series, keyword=None):
         else:
             logging.warn("The series name or keyword was not found in the lookup, returning original series")
             return series
-
 
 def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
     """
@@ -172,11 +170,3 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
                 prev_key = key
         else:
             raise NotImplementedError
-
-
-def chunker(n, n_chunks=None, n_per_chunk=None):
-    
-    np.arange(n) // (n) / 10)
-    """Yield successive n-sized chunks from l."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]

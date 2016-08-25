@@ -229,3 +229,45 @@ def cutagg(ser_list, cuts, values=None, agg_function=np.sum):
     grps = [pd.cut(x, c) for c, x in zip(cuts, ser_list)]
     
     return values.groupby(grps).agg(np.sum)
+
+def pretty_interval(interval_string, return_type="both", return_concat=" & "):
+    """
+    Prettifies interval strings like '(0, 3]' to use <= and > and >= and < 
+    
+    Parameters
+    ----------
+    interval_string: string
+        a string like (0, 2] that represents an interval (usually output by pandas.cut)
+    return_type: string (either 'both', 'right', or 'left')
+        both: return both the left and right boundaries in the output string
+        right: return just the right (upper) output boundary as a string
+        left: return just the left (lower) output boundary as a string
+    return_concat: string
+        if return_type=='both', a string to separate the lower and upper bounds in the output
+        
+        
+    >>>pretty_interval('(0, 3]')
+    >>>">0 & <=3"
+    
+    >>>pretty_interval("[9, 12]", return_type="right")
+    >>>"<=12"
+    
+    >>>pretty_interval("(0, 4)", return_concat="and")
+    >>>">0 and <4"
+    """
+    s1, s2 = interval_string.split(",")
+    s1_id, s1_num = s1[0], s1[1:]
+    s2_id, s2_num = s2[-1], s2[:-1]
+    s2_id = d[s2_id]
+    s1_id = d[s1_id]
+    
+    l = s1_id+s1_num
+    r = s2_id+s2_num
+    if return_type=='both':
+        return return_concat.join([l, r])
+    elif return_type=='right':
+        return r
+    elif return_type=="left":
+        return l
+    else:
+        raise KeyError("return_type must be one of 'both', 'right', or 'left'")

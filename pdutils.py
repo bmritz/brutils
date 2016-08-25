@@ -170,3 +170,62 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
                 prev_key = key
         else:
             raise NotImplementedError
+
+
+
+def bins_from_points(cutoffs, lbound=-np.inf, ubound=np.inf):
+    """
+    Creates a list that can be input into binning functions such as pd.cut from points of the cutoffs
+    
+    Parameters
+    ----------
+    cutoffs: list
+        list of cutoff points 
+        
+    lbound: float or int (optional)
+        lower bound of the bins
+    ubound: float or int (optional)
+        upper bound of the bins
+    """
+    return [lbound]+sorted(cutoffs)+[ubound]
+    
+def cutagg(ser_list, cuts, values=None, agg_function=np.sum):
+    """
+    Cuts the values into binned groups defined by the cuts parameter applied to the ser_list
+    and aggregates by agg_function column-wise
+    
+    Parameters:
+    -----------
+    ser_list: list
+            list of iterables (float or int) to cut up to determine groups
+            
+    cuts:     list of lists
+            list (same length as ser_list) of a list of cutoffs to use on the series associated by position
+            
+    values:   pandas Series or DataFrame (optional)
+            Pandas series or dataframe which to aggregate -- must have groupby() method
+            
+    agg_function:  function or dict (default np.sum)
+            Function to use for aggregating groups. If a function, must either work when passed a DataFrame or when passed to DataFrame.apply. If passed a dict, the keys must be DataFrame column names.
+            Accepted Combinations are:
+            string cythonized function name
+            function
+            list of functions
+            dict of columns -> functions
+            nested dict of names -> dicts of functions
+
+                        
+    Default behavior:
+    -----------------
+    it counts the number of observations in each series-cut
+    """
+    # check that all series lengths are equal
+    series_lengths = [len(x) for x in ser_list]
+    assert series_lengths.count(series_lengths[0]) == len(series_lengths)
+    
+    # make values column of all ones (equivalent to count) if none was given
+    values = pd.Series(np.ones(series_lengths[0])) if values is None else values
+    
+    grps = [pd.cut(x, c) for c, x in zip(cuts, ser_list)]
+    
+    return values.groupby(grps).agg(np.sum)

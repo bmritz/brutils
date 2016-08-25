@@ -258,6 +258,7 @@ def pretty_interval(interval_string, return_type="both", return_concat=" & "):
     s1, s2 = interval_string.split(",")
     s1_id, s1_num = s1[0], s1[1:]
     s2_id, s2_num = s2[-1], s2[:-1]
+    d = {"(":">", "[":">=", ")":"<", "]":"<="}
     s2_id = d[s2_id]
     s1_id = d[s1_id]
     

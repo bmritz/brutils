@@ -172,6 +172,27 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
             raise NotImplementedError
 
 
+def complete_index(df, *kwargs):
+    """
+    complete the index of the dataframe with all possible values of the different levels of the index
+
+    Parameters
+    ----------
+    df: pandas datafrmae
+        the dataframe for which the index will be completed
+
+    **kwargs: 
+        keyword arguments to the panads DataFrame reindex() method
+
+    Output
+    ------
+    A pandas DataFrame with the completed index
+    """
+
+    all_idx = itertools.product(*[y.values for y in x.levels])
+
+    return df.reindex(pd.Index(all_idx), **kwargs)
+
 
 def bins_from_points(cutoffs, lbound=-np.inf, ubound=np.inf):
     """
@@ -229,6 +250,7 @@ def cutagg(ser_list, cuts, values=None, agg_function=np.sum):
     grps = [pd.cut(x, c) for c, x in zip(cuts, ser_list)]
     
     return values.groupby(grps).agg(np.sum)
+
 
 def pretty_interval(interval_string, return_type="both", return_concat=" & "):
     """

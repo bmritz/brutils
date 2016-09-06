@@ -5,6 +5,7 @@ This module holds helper functions for use with the pandas package
 import logging
 import pandas as pd
 import numpy as np
+import itertools
 
 def printall(df, max_rows = 999):
     """prints the entire dataframe (up to max_rows) and returns to original context"""
@@ -294,3 +295,31 @@ def pretty_interval(interval_string, return_type="both", return_concat=" & "):
         return l
     else:
         raise KeyError("return_type must be one of 'both', 'right', or 'left'")
+
+
+
+def multi_groupby(df, groupby, func, nafill="---"):
+    """groups by each combination of the groupby -- each level separately
+
+    Parameters
+    ----------
+    df -- dataframe or series, 
+    groupby -- list of series 
+    func -- function to apply to each group
+    nafill -- string, string to fill na in the returning index
+
+    Output
+    ------
+    dataframe
+
+    Dataframe with the index filled with <nafill> for higher order aggregation functions
+
+    """
+    allcombos = []
+    index_names = set()
+    for r in xrange(1,len(groupby)+1):
+        for combo in itertools.combinations(range(len(groupby)), r):
+            grouped = df.groupby([groupby[i] for i in combo]).apply(func)
+            index_names.update(set(grouped.index.names))
+            allcombos.append(grouped.reset_index())
+    return pd.concat(allcombos).fillna(nafill).set_index(list(index_names))

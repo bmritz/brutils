@@ -7,9 +7,9 @@ import pandas as pd
 import numpy as np
 import itertools
 
-def printall(df, max_rows = 999):
+def printall(df, max_rows = 999, max_colwidth=200):
     """prints the entire dataframe (up to max_rows) and returns to original context"""
-    with pd.option_context('display.max_rows', 999):
+    with pd.option_context('display.max_rows', max_rows, 'display.max_colwidth', max_colwidth):
         print df
 
 
@@ -173,7 +173,7 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
             raise NotImplementedError
 
 
-def complete_index(df, *kwargs):
+def complete_index(df, **kwargs):
     """
     complete the index of the dataframe with all possible values of the different levels of the index
 
@@ -190,9 +190,10 @@ def complete_index(df, *kwargs):
     A pandas DataFrame with the completed index
     """
 
-    all_idx = itertools.product(*[y.values for y in x.levels])
-
-    return df.reindex(pd.Index(all_idx), **kwargs)
+    assert isinstance(df.index, pd.MultiIndex)
+    all_idx = itertools.product(*[y.values for y in df.index.levels])
+    
+    return df.reindex(pd.MultiIndex.from_tuples(list(all_idx)), **kwargs)
 
 
 def bins_from_points(cutoffs, lbound=-np.inf, ubound=np.inf):
@@ -295,7 +296,6 @@ def pretty_interval(interval_string, return_type="both", return_concat=" & "):
         return l
     else:
         raise KeyError("return_type must be one of 'both', 'right', or 'left'")
-
 
 
 def multi_groupby(df, groupby, func, nafill="---"):

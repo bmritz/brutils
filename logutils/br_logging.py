@@ -30,10 +30,14 @@ def find_repo_root(d):
 def setup_logging(filename=None, level=logging.INFO, logging_directory = "./logs", make_file=True):
     # sys.argv will be '' if running interactively in python
     # sys.argv will be "<somedirectory>/ipython" if running interactively in ipython
-    if filename or sys.argv[0].split("/")[-1] not in ["ipython", ""]:
+    cmand = sys.argv[0].split("/")
+    check1 = cmand[-1] not in ['ipython', '']
+    check2 = 'ipykernel' not in cmand
+    if filename or (check1 and check2):
+        print("logging directory is %s" % logging_directory)
         print_to_log = True
         log_file = filename or os.path.abspath(os.path.join(logging_directory, "%s_%s.log" %
-                    (os.path.splitext(sys.argv[0])[0], time.strftime('%Y%m%d_%H%M%S'))))
+                    (os.path.split(os.path.splitext(sys.argv[0])[0])[-1], time.strftime('%Y%m%d_%H%M%S'))))
     else:
         print_to_log = False
     fmt_string = "%(asctime)s - %(filename)s - %(levelname)s - %(message)s"

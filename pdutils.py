@@ -10,7 +10,7 @@ import itertools
 def printall(df, max_rows = 999, max_colwidth=200):
     """prints the entire dataframe (up to max_rows) and returns to original context"""
     with pd.option_context('display.max_rows', max_rows, 'display.max_colwidth', max_colwidth):
-        print df
+        print (df)
 
 
 def to_html_float_left(dfs, titles=None, padding_left=10):
@@ -48,9 +48,7 @@ def split_string(string_series, delim=" "):
     """
     splits the string series into multiple series based on the delimiter
     returns generator object of series
-
     if you want a tuple then call tuple(split_string(<string series>))
-
     you can assign to new columns like:
     df['newcol1'], df['newcol2'] = split_string(df['delimited string col'])
     """
@@ -97,7 +95,18 @@ def fmt_series_retail(series, keyword=None):
     keyword = None: str, optional
         The keyword that the function will attempt to match to an internal lookup to 
         determine which type of format to use
-        Examples could be: 'Customer', 'visits', 'units'
+        Currently implemented keywords:
+            sales
+            spend
+            unit
+            customer
+            visit
+            index
+            sor
+            share
+            requirement
+            pct
+            percent
         Case insensitive
         If None (default), the keyword defaults to the name of the series
     """
@@ -113,6 +122,7 @@ def fmt_series_retail(series, keyword=None):
         logging.warn("The column name or keyword supplied was not a string, returning original series")
         return series
     else:
+        # in cases like units/customer, or units per customer, select the first word
         if 'per' in colname:
             checkstr = colname.split('per')[0]
         elif '/' in colname:
@@ -124,7 +134,7 @@ def fmt_series_retail(series, keyword=None):
             return series.map(PCT)
         elif any(x in checkstr.lower() for x in ['sales', 'spend']):
             return series.map(DOLLAR)
-        elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer']):
+        elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt']):
             return series.map(WHOLE)
         elif any(x in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
             assert (series<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
@@ -136,10 +146,8 @@ def fmt_series_retail(series, keyword=None):
 def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
     """
     returns an iterator that chunks the file on a column value
-
     TODO: 
     Progress bar
-
     """
 
     # iterate through the column and construct a dict of the start and end indexes
@@ -176,15 +184,12 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
 def complete_index(df, **kwargs):
     """
     complete the index of the dataframe with all possible values of the different levels of the index
-
     Parameters
     ----------
     df: pandas datafrmae
         the dataframe for which the index will be completed
-
     **kwargs: 
         keyword arguments to the panads DataFrame reindex() method
-
     Output
     ------
     A pandas DataFrame with the completed index
@@ -236,7 +241,6 @@ def cutagg(ser_list, cuts, values=None, agg_function=np.sum):
             list of functions
             dict of columns -> functions
             nested dict of names -> dicts of functions
-
                         
     Default behavior:
     -----------------
@@ -298,28 +302,51 @@ def pretty_interval(interval_string, return_type="both", return_concat=" & "):
         raise KeyError("return_type must be one of 'both', 'right', or 'left'")
 
 
-def multi_groupby(df, groupby, func, nafill="---"):
+def multi_groupby(df, level=None, func=np.sum, nafill="-", max_combos=None):
     """groups by each combination of the groupby -- each level separately
-
+    
+    Only groups levels -- not columns!
     Parameters
     ----------
     df -- dataframe or series, 
-    groupby -- list of series 
+    level -- list of level names to group by 
     func -- function to apply to each group
     nafill -- string, string to fill na in the returning index
-
     Output
     ------
     dataframe
-
     Dataframe with the index filled with <nafill> for higher order aggregation functions
-
     """
+    if max_combos is None:
+        max_combos = len(level)
     allcombos = []
-    index_names = set()
-    for r in xrange(1,len(groupby)+1):
-        for combo in itertools.combinations(range(len(groupby)), r):
-            grouped = df.groupby([groupby[i] for i in combo]).apply(func)
-            index_names.update(set(grouped.index.names))
-            allcombos.append(grouped.reset_index())
-    return pd.concat(allcombos).fillna(nafill).set_index(list(index_names))
+    for r in xrange(1,len(level)+1):
+        if r <= max_combos:
+            for combo in itertools.combinations(level, r):
+                grouped = df.groupby(level=combo).apply(func)
+                allcombos.append(grouped.reset_index())
+    return pd.concat(allcombos).fillna(nafill).set_index(level)
+
+def index_to(ser, index_on, index_to):
+    """
+    ser: pandas series
+    index_on: level to index on
+    index_to: value of that level to index to 
+    """
+    totest = pd.Series([1,2,3,4,5,6], pd.MultiIndex.from_product([[1,2],[1,2,3]], names=['a', 'b']), name='spend')
+    w = ser.unstack(index_on, fill_value=0.0)
+    b = w.xs(index_to, axis=1)
+    return w.div(b, axis=0).stack()*100.
+
+def analyze_distributions(ser, compare_level, dist_level):
+    """find the distribution of the series within <dist_level>, across the <across_level>
+    ser: pandas series
+    across_level: level for with you want to compare distributions
+    dist_level: level for which you want to see the distributions
+    returns: DataFrame
+    """
+    sums = ser.groupby(level=[compare_level, dist_level]).sum()
+    sums.name = sums.name+"_sum"
+    distributions = sums.groupby(level=compare_level).apply(pdu.normalize).rename("distribution_pct")
+    indexes = (distributions.divide(sums.groupby(level=dist_level).sum().pipe(normalize))*100).rename('index')
+    return pd.concat([sums, distributions, indexes], axis=1)

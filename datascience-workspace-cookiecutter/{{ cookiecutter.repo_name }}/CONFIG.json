@@ -1,0 +1,4 @@
+{
+"project_data_directory":"{{ cookiecutter.project_data_directory }}"
+}
+

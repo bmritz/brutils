@@ -45,7 +45,7 @@ def setup_logging(filename=None, level=logging.INFO, logging_directory = "./logs
     repo_dir = find_repo_root(os.path.dirname(os.path.abspath(sys.argv[0])))
     if print_to_log and make_file:
         ensure_dir(log_file)
-        with open(log_file, 'wb') as f:
+        with open(log_file, 'w') as f:
             f.write("***AU LOGGING***\n")
             f.write("SCRIPT INFO:\n")
             f.write("Script full path: %s\n" % os.path.abspath(sys.argv[0]))

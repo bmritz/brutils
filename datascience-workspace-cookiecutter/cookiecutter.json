@@ -1,8 +1,0 @@
-{
-    "client_codename": "client_codename",
-    "project_name": "project_name",
-    "project_data_directory": "/mnt/AUdevelopment/{{cookiecutter.client_codename}}/datascience-workspaces/{{ cookiecutter.project_name }}",
-    "repo_name": "datascience-workspaces--{{ cookiecutter.client_codename }}-{{cookiecutter.project_name|replace(' ', '_') }}",
-    "author_name": "Your name (or your organization/company/team)",
-    "description": "A short description of the project."
-}

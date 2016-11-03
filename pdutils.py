@@ -327,16 +327,30 @@ def multi_groupby(df, level=None, func=np.sum, nafill="-", max_combos=None):
                 allcombos.append(grouped.reset_index())
     return pd.concat(allcombos).fillna(nafill).set_index(level)
 
-def index_to(ser, index_on, index_to):
+
+def index_to(df, index_on, index_to):
     """
-    ser: pandas series
+    df: pandas series or dataframe
     index_on: level to index on
     index_to: value of that level to index to 
+
+    sort order is not preserved
     """
-    totest = pd.Series([1,2,3,4,5,6], pd.MultiIndex.from_product([[1,2],[1,2,3]], names=['a', 'b']), name='spend')
-    w = ser.unstack(index_on, fill_value=0.0)
-    b = w.xs(index_to, axis=1)
-    return w.div(b, axis=0).stack()*100.
+    level_labs = list(df.index.names)
+    #totest = pd.Series([1,2,3,4,5,6], pd.MultiIndex.from_product([[1,2],[1,2,3]], names=['a', 'b']), name='spend')
+    if df.index.nlevels > 1:
+        # multi-index case
+        w = df.unstack(index_on, fill_value=0.0)
+        if w.columns.nlevels > 1:
+            # multiindex dataframe case
+            b = w.xs(index_to, axis=1, level=-1)
+        else:
+            # mutliindex series case
+            b = w.xs(index_to, axis=1)
+        return (w.div(b, axis=0, level=0).stack()*100.).reorder_levels(level_labs)
+    else:
+        # single index case (both df and series)
+        return df.div(df.xs(index_to))*100
 
 def analyze_distributions(ser, compare_level, dist_level):
     """find the distribution of the series within <dist_level>, across the <across_level>

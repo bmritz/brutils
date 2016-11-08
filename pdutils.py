@@ -48,7 +48,9 @@ def split_string(string_series, delim=" "):
     """
     splits the string series into multiple series based on the delimiter
     returns generator object of series
+
     if you want a tuple then call tuple(split_string(<string series>))
+
     you can assign to new columns like:
     df['newcol1'], df['newcol2'] = split_string(df['delimited string col'])
     """
@@ -146,8 +148,10 @@ def fmt_series_retail(series, keyword=None):
 def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
     """
     returns an iterator that chunks the file on a column value
+
     TODO: 
     Progress bar
+
     """
 
     # iterate through the column and construct a dict of the start and end indexes
@@ -184,12 +188,15 @@ def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
 def complete_index(df, **kwargs):
     """
     complete the index of the dataframe with all possible values of the different levels of the index
+
     Parameters
     ----------
     df: pandas datafrmae
         the dataframe for which the index will be completed
+
     **kwargs: 
         keyword arguments to the panads DataFrame reindex() method
+
     Output
     ------
     A pandas DataFrame with the completed index
@@ -241,6 +248,7 @@ def cutagg(ser_list, cuts, values=None, agg_function=np.sum):
             list of functions
             dict of columns -> functions
             nested dict of names -> dicts of functions
+
                         
     Default behavior:
     -----------------
@@ -302,31 +310,64 @@ def pretty_interval(interval_string, return_type="both", return_concat=" & "):
         raise KeyError("return_type must be one of 'both', 'right', or 'left'")
 
 
-def multi_groupby(df, level=None, func=np.sum, nafill="-", max_combos=None):
+def multi_groupby(df, by=None, level=None, func='sum', nafill="-", max_combos=None):
     """groups by each combination of the groupby -- each level separately
     
     Only groups levels -- not columns!
+
     Parameters
     ----------
     df -- dataframe or series, 
-    level -- list of level names to group by 
-    func -- function to apply to each group
+    by -- list of column names to group by, default None, if both by and level are none, then groups on all index levels
+    level -- list of level names to group by, default None, if both by and level are none, then groups on all index levels 
+    func -- string, function to apply to each group, only supports 'sum' and 'mean' for now
     nafill -- string, string to fill na in the returning index
+
     Output
     ------
     dataframe
-    Dataframe with the index filled with <nafill> for higher order aggregation functions
-    """
-    if max_combos is None:
-        max_combos = len(level)
-    allcombos = []
-    for r in xrange(1,len(level)+1):
-        if r <= max_combos:
-            for combo in itertools.combinations(level, r):
-                grouped = df.groupby(level=combo).apply(func)
-                allcombos.append(grouped.reset_index())
-    return pd.concat(allcombos).fillna(nafill).set_index(level)
 
+    Dataframe with the index filled with <nafill> for higher order aggregation functions
+
+    """
+
+    if by and level:
+        raise AssertionError("Only Specify one of the paramters by= or level=")
+    elif by:
+        groupby=by
+        kind = "by"
+    elif level:
+        groupby=level
+        kind = "level"
+    else:
+        groupby = list(df.index.names)
+        kind = "level"
+
+    #level=level or list(df.index.names)
+    if max_combos is None:
+        max_combos = len(groupby)
+    allcombos = []
+    i = 0
+
+    cols_for_func = set(df.columns).difference(set(groupby))
+    print cols_for_func
+    for r in xrange(1,len(groupby)+1):
+        if r <= max_combos:
+            for combo in itertools.combinations(groupby, r):
+                group_args = {kind: combo}
+                if func=='sum':
+                    grouped = df.groupby(**group_args)[list(cols_for_func)].sum()
+                elif func=='mean':
+                    grouped = df.groupby(**group_args)[list(cols_for_func)].mean()
+                else:
+                    raise NotImplementedError("Only functions 'sum' and 'mean' are currently supported")
+                to_append = grouped.reset_index()
+                # convert the grouped variables to objects (strings)
+                to_append.loc[:,combo] = to_append.loc[:,combo].astype(object)
+                to_append['iteration'] = i
+                allcombos.append(to_append)
+                i+=1
+    return pd.concat(allcombos).fillna(nafill).set_index(['iteration'] + groupby)
 
 def index_to(df, index_on, index_to):
     """
@@ -357,10 +398,12 @@ def analyze_distributions(ser, compare_level, dist_level):
     ser: pandas series
     across_level: level for with you want to compare distributions
     dist_level: level for which you want to see the distributions
+
     returns: DataFrame
     """
     sums = ser.groupby(level=[compare_level, dist_level]).sum()
     sums.name = sums.name+"_sum"
-    distributions = sums.groupby(level=compare_level).apply(pdu.normalize).rename("distribution_pct")
+    distributions = sums.groupby(level=compare_level).apply(normalize).rename("distribution_pct")
     indexes = (distributions.divide(sums.groupby(level=dist_level).sum().pipe(normalize))*100).rename('index')
     return pd.concat([sums, distributions, indexes], axis=1)
+

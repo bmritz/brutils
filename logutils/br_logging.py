@@ -6,18 +6,50 @@ import pwd
 from git import Repo, InvalidGitRepositoryError
 
 def ensure_dir(f):
+    """ensure the directory where file f is found exists
+
+    INPUTS
+    ------
+    f: string -- filepath to check
+
+    OUTPUTS
+    -------
+    None
+
+    Checks if the path to the file exists, and creates the path if it does not
+    """
     d = os.path.dirname(f)
     if not os.path.isdir(d):
         os.makedirs(d)
 
 def file_in_dir(fil, directory):
+    """checks if fil is in the directory"""
     return fil in os.listdir(directory)
 
 def up_one_level(from_dir):
+    """returns the pathname for the directory one level up from <from_dir>
+
+    INPUTS
+    ------
+    from_dir: string -- filepath to find one up from
+    """
     next_dir = os.path.abspath(os.path.join(from_dir, '..'))
     return next_dir
 
 def find_repo_root(d):
+    """finds the git repository root of directory <d>
+
+    INPUTS
+    ------
+    d: string
+        Directory path to find the git repo root
+
+    OUTPUTS
+    -------
+    string: directory path of the git repository root
+
+    This function searches upward from <d>  for a file called '.git'
+    """
     f = '.git'
     if file_in_dir(f, d):
         return d
@@ -28,6 +60,30 @@ def find_repo_root(d):
 
 
 def setup_logging(filename=None, level=logging.INFO, logging_directory = "./logs", make_file=True):
+    """setup default logging for dslib
+
+    INPUTS
+    ------
+    filname: string 
+        The filename for the persistent log that is created
+        Default is the name of the main program running appended to a timestamp of the time the program was launched
+
+    level: int
+        The level for the logging, use one of logging.DEBUG, logging.INFO, logging.WARN, logging.ERROR, logging.CRITICAL
+
+    logging_directory: string
+        The directory that the log file will be created in
+        Defaults to subdirectory "logs" created from where the main script was invoked
+
+    make_file: boolean (default: True)
+        True will make a persistent log file and write to it in addition to writing to stdout
+        False will write the logging to stdout
+
+    OUTPUTS
+    -------
+    logging.Logger object
+        You can use the .debug(), .info(), .warn(), .error(), .critical() methods to log messages
+    """
     # sys.argv will be '' if running interactively in python
     # sys.argv will be "<somedirectory>/ipython" if running interactively in ipython
     cmand = sys.argv[0].split("/")

@@ -1,6 +1,6 @@
 import sys
-sys.path.append(os.path.abspath(".."))
+sys.path.append("/mnt/home/britz/projects/dslib/")
 print sys.path
-from br_logging import setup_logging, setup_logger
+from au_logging import setup_logging, setup_logger
 
 #au_log = setup_logging()

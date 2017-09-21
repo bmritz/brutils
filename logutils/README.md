@@ -3,8 +3,8 @@
 Create logs for your project using:
 ```python
 import sys
-sys.path.append("/path/to/brutils")
-from br_logging import setup_logging
+sys.path.append("/path/to/dslib")
+from au_logging import setup_logging
 logger = setup_logging()
 logger.debug("This message is NOT written to the log because the default level is logging.INFO")
 logger.info("This message is written to the log")
@@ -18,7 +18,7 @@ logger.critical("This message is also written to the log")
 * By default, each run of the script will create a new file in the logs/ sub-directory with the naming convention **\<name of python script\>_\<YearMonthDay_HourMinuteSecond\>.log**
 * You can also choose a custom filepath and filename to write the log to as a parameter to setup_logging():
 ```python
-from br_logging import setup_logging
+from au_logging import setup_logging
 logger = setup_logging(filename="/path/to/logfile/logfile.log")
 ```
      

@@ -5,15 +5,66 @@ This module holds helper functions for use with the pandas package
 import logging
 import pandas as pd
 import numpy as np
-import itertools
+import itertools, copy
+import json
+from collections import OrderedDict
+
+def df_from_ldjson(filename):
+    all_lines = []
+    with open(filename, "r") as fil:
+        for line in fil:
+            all_lines.append(json.loads(line))
+    return pd.DataFrame(all_lines)
+        
 
 def printall(df, max_rows = 999, max_colwidth=200):
     """prints the entire dataframe (up to max_rows) and returns to original context"""
     with pd.option_context('display.max_rows', max_rows, 'display.max_colwidth', max_colwidth):
         print (df)
 
+def english_join(seq):
+    """ join a list of strings separated by commas with an 'and' contraction before the last value
 
-def to_html_float_left(dfs, titles=None, padding_left=10):
+    INPUTS:
+    seq (list of strings)
+
+    OUTPUTS:
+    (string)
+    """
+    return ", ".join(seq[:-1]) + " and " + seq[-1]
+
+def timedelta_to_english(td):
+    info = OrderedDict()
+    info["Days"] = td.days
+    info["Hours"] = td.seconds // 3600
+    info["Minutes"] = (td.seconds//60)%60
+    res = []
+    for lab, t in info.items():
+        if t>0:
+            if t==1:
+                res.append(lab[:-1])
+            else:
+                res.append("%s %s" % (t, lab))
+    return ", ".join(res)
+
+def list_to_html(lst, list_type="unordered"):
+    if list_type=='unordered':
+        tg_open, tg_close = "<ul>", "</ul>"
+    else:
+        tg_open, tg_close = "<ol>", "</ol>"
+        
+    ret = [tg_open]
+    
+    for x in lst:
+        if not isinstance(x, list):
+            ret.append("<li>"+str(x)+"</li>")
+        else:
+            ret.append(list_to_html(x, list_type=list_type))
+    ret.append(tg_close)
+    #return tg_open + "".join(["<li>"+str(x)+"</li>" for x in lst]) + tg_close
+    return "".join(ret)
+
+def html_float_left(htmls, titles=None, padding_left=10):
     """
     Show dataframes side by side using the float:left style of divs
     
@@ -29,19 +80,19 @@ def to_html_float_left(dfs, titles=None, padding_left=10):
     """
     
     if titles is not None:
-        assert len(titles)==len(dfs), "Length of titles must be same length as dfs"
+        assert len(titles)==len(htmls), "Length of titles must be same length as dfs"
     else:
-        titles = ["DF %s" % i for i, x in enumerate(dfs)]
+        titles = ["Figure %s" % i for i, x in enumerate(htmls)]
     
     html = ''
-    for i, (k, v) in enumerate(zip(titles, dfs)):
+    for i, (k, v) in enumerate(zip(titles, htmls)):
         if i > 0:
             p = padding_left
         else:
             p = 10
         html += ('''<div style=\"float:left; padding-left:{}px;\">
                  <strong>{}</strong>{}</div>'''
-                 .format(p, k , v.to_html()))
+                 .format(p, k , v))
     return '<div style="float:left; width:100%;">' + html + '</div>'
 
 def split_string(string_series, delim=" "):
@@ -58,15 +109,16 @@ def split_string(string_series, delim=" "):
     #tups =  zip(*string_series.apply(lambda x: x.split(delim)))
     return (pd.Series(data=x, index=orig_index) for x in zip(*string_series.apply(lambda x: x.split(delim))))
 
-def normalize(df, axis=None):
+def normalize(df, axis=None, strict=True):
     """
     Normalize the dataframe or group on the selected axis
     axis = None, 0 (columns), or 1 (rows)
     """
-    assert np.all(df>=0), "DataFrame input into norm_vert must have all elements >=0"
+    if strict:
+        assert np.all(df>=0), "DataFrame input into norm_vert must have all elements >=0"
     assert axis in [None, 0, 1], "axis parameter must be either None, 0, or 1"
     if axis is None:
-        return df.div(df.sum().sum())
+        return df.div(df.values.sum())
     elif axis==0:
         return df.div(df.sum(axis=0), axis=1)
     elif axis==1:
@@ -82,11 +134,34 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
         return pd.merge(left.reset_index(), right.reset_index(), 
                                 how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator).set_index(index_names)
 
-DOLLAR = "${:,.2f}".format
-WHOLE = "{:,.0f}".format
-PCT = "{:.0%}".format
+DOLLAR = "${:,.2f}"
+WHOLE = "{:,.0f}"
+PCT = "{:.0%}"
+DECIMAL = "{0:0.2f}"
 
-def fmt_series_retail(series, keyword=None):
+def get_fmt_from_keyword(keyword):
+    """ return the correct format string from a keyword"""
+    colname = copy.copy(keyword)
+    # in cases like units/customer, or units per customer, select the first word
+    if 'per' in colname:
+        checkstr = colname.split('per')[0]
+    elif '/' in colname:
+        checkstr = colname.split('/')
+    else:
+        checkstr = colname
+
+    if any(x in checkstr.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$']):
+        return DOLLAR
+    elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole']):
+        return WHOLE
+    elif any(x in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
+        return PCT
+    elif any(x in checkstr.lower() for x in ['decimal']):
+        return DECIMAL
+    else:
+        return "{}"
+
+def fmt_series_retail(series, keyword=None, force=True):
     """
     Parameters
     ----------
@@ -117,11 +192,8 @@ def fmt_series_retail(series, keyword=None):
     if series.dtype == 'O':
         logging.debug("The series was dtype 'O', returning original series")
         return series
-    elif colname is None:
-        logging.warn("There was no name for the series, and no keyword supplied, returning original series")
-        return series
-    elif type(colname) is not str:
-        logging.warn("The column name or keyword supplied was not a string, returning original series")
+    elif colname is None or type(colname) is not str:
+        logging.warn("The column name or keyword supplied was not a string, or was not supplied at all, returning original series")
         return series
     else:
         # in cases like units/customer, or units per customer, select the first word
@@ -133,17 +205,21 @@ def fmt_series_retail(series, keyword=None):
             checkstr = colname
 
         if (series<=1).all():
-            return series.map(PCT)
-        elif any(x in checkstr.lower() for x in ['sales', 'spend']):
-            return series.map(DOLLAR)
-        elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt']):
-            return series.map(WHOLE)
-        elif any(x in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
-            assert (series<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
-            return series.map(PCT)
+            return series.map(PCT.format)
         else:
-            logging.warn("The series name or keyword was not found in the lookup, returning original series")
-            return series
+            fmt = get_fmt_from_keyword(checkstr)
+            if fmt == PCT:
+                assert (series<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
+            if fmt != "{}":
+                return series.map(fmt.format)
+            else:
+                if force:
+                    if np.issubdtype(series.dtype, np.integer):
+                        return series.map(WHOLE.format)
+                    if np.issubdtype(series.dtype, np.float):
+                        return series.map(DECIMAL.format)
+                logging.warn("The series name or keyword was not found in the lookup, returning original series")
+                return series
 
 def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
     """
@@ -205,7 +281,7 @@ def complete_index(df, **kwargs):
     assert isinstance(df.index, pd.MultiIndex)
     all_idx = itertools.product(*[y.values for y in df.index.levels])
     
-    return df.reindex(pd.MultiIndex.from_tuples(list(all_idx)), **kwargs)
+    return df.reindex(pd.MultiIndex.from_tuples(list(all_idx), names=df.index.names), **kwargs)
 
 
 def bins_from_points(cutoffs, lbound=-np.inf, ubound=np.inf):
@@ -323,6 +399,7 @@ def multi_groupby(df, by=None, level=None, func='sum', nafill="-", max_combos=No
     func -- string, function to apply to each group, only supports 'sum' and 'mean' for now
     nafill -- string, string to fill na in the returning index
 
+    NOTE: will not work without named indexes
     Output
     ------
     dataframe
@@ -340,7 +417,7 @@ def multi_groupby(df, by=None, level=None, func='sum', nafill="-", max_combos=No
         groupby=level
         kind = "level"
     else:
-        groupby = list(df.index.names)
+        groupby = df.index.names
         kind = "level"
 
     #level=level or list(df.index.names)
@@ -350,7 +427,6 @@ def multi_groupby(df, by=None, level=None, func='sum', nafill="-", max_combos=No
     i = 0
 
     cols_for_func = set(df.columns).difference(set(groupby))
-    print cols_for_func
     for r in xrange(1,len(groupby)+1):
         if r <= max_combos:
             for combo in itertools.combinations(groupby, r):
@@ -367,7 +443,9 @@ def multi_groupby(df, by=None, level=None, func='sum', nafill="-", max_combos=No
                 to_append['iteration'] = i
                 allcombos.append(to_append)
                 i+=1
-    return pd.concat(allcombos).fillna(nafill).set_index(['iteration'] + groupby)
+    allcombos = pd.concat(allcombos)
+    allcombos.loc[:,groupby] = allcombos.loc[:,groupby].fillna(nafill)
+    return allcombos.set_index(['iteration'] + groupby)
 
 def index_to(df, index_on, index_to):
     """
@@ -393,17 +471,40 @@ def index_to(df, index_on, index_to):
         # single index case (both df and series)
         return df.div(df.xs(index_to))*100
 
-def analyze_distributions(ser, compare_level, dist_level):
+def analyze_distributions(ser, compare_level, dist_level, output_global_dist=False):
     """find the distribution of the series within <dist_level>, across the <across_level>
+    
     ser: pandas series
     across_level: level for with you want to compare distributions
     dist_level: level for which you want to see the distributions
+    global_dist: boolean, defaul false, do you want to include a column with the global distributions for the innermost level?
 
     returns: DataFrame
-    """
+    """ 
     sums = ser.groupby(level=[compare_level, dist_level]).sum()
-    sums.name = sums.name+"_sum"
-    distributions = sums.groupby(level=compare_level).apply(normalize).rename("distribution_pct")
-    indexes = (distributions.divide(sums.groupby(level=dist_level).sum().pipe(normalize))*100).rename('index')
-    return pd.concat([sums, distributions, indexes], axis=1)
+    sums.name = "distribution_sum"
+    distributions = sums.groupby(level=0).apply(normalize).rename("distribution_pct")
+    global_dist = sums.groupby(level=1).sum().pipe(normalize).rename("global_distribution_pct")
+    #indexes = (distributions.divide(global_dist)*100).rename('index')
+    # this handles categoricals
 
+    global_dist_broadcast =  pd.Series(
+        [global_dist.loc[x] for x in distributions.index.get_level_values(1)], 
+        index=distributions.index
+        ).rename("global_distribution_pct")
+    indexes = (distributions.divide(global_dist_broadcast)*100).rename("index")
+    if output_global_dist:
+        to_return = pd.concat([sums, distributions, indexes, global_dist_broadcast], axis=1)
+    else:
+        to_return = pd.concat([sums, distributions, indexes], axis=1)
+
+    return to_return
+
+
+def group_to_other(groups, weights=None, pct=.02, other_label="other"):
+    ser = weights if weights is not None else pd.Series(1, index=groups.index)
+    normed = ser.groupby(groups).transform(lambda x: x.sum().astype('float32') / ser.sum().astype('float32'))
+    mask = normed < pct
+    groups_copy = pd.Series(groups.copy())
+    groups_copy[mask.values] = other_label
+    return groups_copy

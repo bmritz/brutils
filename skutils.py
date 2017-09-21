@@ -3,12 +3,15 @@ from sklearn.pipeline import FeatureUnion
 def organize_colnames(X):
     """
     Organizes a keep_fxn so we can use it in a pipeline to subset columns
+
     Inputs
     ------
     X: A pandas dataframe
+
     Outputs
     -------
     colnames, keep_fxn
+
     colnames: A numpy array of the column names of X
     keep_fxn: A Function that can be used to subset the numpy array underlying X using column names, not position
     """   
@@ -32,9 +35,11 @@ def organize_colnames(X):
 def link_pipes(*args):
     """Links pipelines of form ('name', Pipeline) together in hierarchical fashion,
     concatenates the names with "->" to create the name of the new pipeline
+
     Inputs
     ------
     *args, tuples of the form ("name", sklearn.pipeline.Pipeline)
+
     Outputs
     -------
     A tuple of the form ("newname", sklearn.pipeline.Pipeline) 
@@ -47,9 +52,11 @@ def link_pipes(*args):
 def union_pipes(*args):
     """Unions pipelines of form ('name', Pipeline) together using FeatureUnion,
     concatenates the names with "||" to create the name of the new pipeline
+
     Inputs
     ------
     *args, tuples of the form ("name", sklearn.pipeline.Pipeline)
+
     Outputs
     -------
     A tuple of the form ("newname", sklearn.pipeline.FeatureUnion) 
@@ -67,18 +74,18 @@ def tree_to_code(tree, feature_names):
         feature_names[i] if i != _tree.TREE_UNDEFINED else "undefined!"
         for i in tree.tree_.feature
     ]
-    print "def tree({}):".format(", ".join(feature_names))
+    print("def tree({}):".format(", ".join(feature_names)))
 
     def recurse(node, depth):
         indent = "    " * depth
         if tree_.feature[node] != _tree.TREE_UNDEFINED:
             name = feature_name[node]
             threshold = tree_.threshold[node]
-            print "{}if {} <= {}:".format(indent, name, threshold)
+            print("{}if {} <= {}:".format(indent, name, threshold))
             recurse(tree_.children_left[node], depth + 1)
-            print "{}else:  # if {} > {}".format(indent, name, threshold)
+            print("{}else:  # if {} > {}".format(indent, name, threshold))
             recurse(tree_.children_right[node], depth + 1)
         else:            
-            print "{}return {}".format(indent, np.argmax(tree_.value[node]))
+            print("{}return {}".format(indent, np.argmax(tree_.value[node])))
 
     recurse(0, 1)

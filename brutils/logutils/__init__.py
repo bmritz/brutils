@@ -1,4 +1,4 @@
-from .au_logging import setup_logging
+from .br_logging import setup_logging
 import logging
 
 

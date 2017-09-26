@@ -1,6 +1,6 @@
 from jinja2 import Template
 import uuid
-from Content import Content, coerce_to_content
+from .Content import Content, coerce_to_content
 
 
 class BaseSlide(object):

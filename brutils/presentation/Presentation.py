@@ -1,6 +1,6 @@
 from jinja2 import Template
 
-from Slides import ContentSlide, TitleSlide
+from .Slides import ContentSlide, TitleSlide
 import os
 package_directory = os.path.dirname(os.path.abspath(__file__))
 class Presentation(object):

@@ -8,7 +8,7 @@ setup(name="brutils",
         author="Brian Ritz",
         author_email="bmritz@indiana.edu",
         license="",
-        packages=["brutils"],
+        packages=setuptools.find_packages(),
         install_requires = [
         'gitpython',
         'pandas',

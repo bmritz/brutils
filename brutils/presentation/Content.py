@@ -1,4 +1,7 @@
-import StringIO
+try:
+    import StringIO
+except ModuleNotFoundError:
+    from io import StringIO
 import matplotlib.pyplot as plt
 from jinja2 import Template
 

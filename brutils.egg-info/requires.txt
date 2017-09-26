@@ -1,0 +1,10 @@
+gitpython
+pandas
+numpy
+sklearn
+imblearn
+matplotlib
+seaborn
+ipywidgets
+Ipython
+traitlets

@@ -1,0 +1,7 @@
+README.md
+brutils.egg-info/PKG-INFO
+brutils.egg-info/SOURCES.txt
+brutils.egg-info/dependency_links.txt
+brutils.egg-info/not-zip-safe
+brutils.egg-info/requires.txt
+brutils.egg-info/top_level.txt

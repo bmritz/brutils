@@ -1,4 +1,5 @@
 README.md
+brutils/__init__.py
 brutils.egg-info/PKG-INFO
 brutils.egg-info/SOURCES.txt
 brutils.egg-info/dependency_links.txt

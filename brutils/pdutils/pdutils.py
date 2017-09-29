@@ -473,7 +473,7 @@ def index_to(df, index_on, index_to, inverse=False):
         # single index case (both df and series)
         r = df.div(df.xs(index_to))*100
     if inverse:
-        return 1/r
+        return 100.*(1/(r/100.))
     return r
 
 def analyze_distributions(ser, compare_level, dist_level, output_global_dist=False):

@@ -447,13 +447,15 @@ def multi_groupby(df, by=None, level=None, func='sum', nafill="-", max_combos=No
     allcombos.loc[:,groupby] = allcombos.loc[:,groupby].fillna(nafill)
     return allcombos.set_index(['iteration'] + groupby)
 
-def index_to(df, index_on, index_to):
+def index_to(df, index_on, index_to, inverse=False):
     """
     df: pandas series or dataframe
     index_on: level to index on
     index_to: value of that level to index to 
+    inverse=False: Get the index of index_to relative to everything else, instead of everything else relative to index_to (this internally is the reciporical)
 
     sort order is not preserved
+    An index will be calculated for all other fields of the index, and for all columns
     """
     level_labs = list(df.index.names)
     #totest = pd.Series([1,2,3,4,5,6], pd.MultiIndex.from_product([[1,2],[1,2,3]], names=['a', 'b']), name='spend')
@@ -466,10 +468,13 @@ def index_to(df, index_on, index_to):
         else:
             # mutliindex series case
             b = w.xs(index_to, axis=1)
-        return (w.div(b, axis=0, level=0).stack()*100.).reorder_levels(level_labs)
+        r = (w.div(b, axis=0, level=0).stack()*100.).reorder_levels(level_labs)
     else:
         # single index case (both df and series)
-        return df.div(df.xs(index_to))*100
+        r = df.div(df.xs(index_to))*100
+    if inverse:
+        return 1/r
+    return r
 
 def analyze_distributions(ser, compare_level, dist_level, output_global_dist=False):
     """find the distribution of the series within <dist_level>, across the <across_level>

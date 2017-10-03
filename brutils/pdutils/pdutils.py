@@ -136,7 +136,7 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
 
 DOLLAR = "${:,.2f}"
 WHOLE = "{:,.0f}"
-PCT = "{:.0%}"
+PCT = "{:.1%}"
 DECIMAL = "{0:0.2f}"
 
 def get_fmt_from_keyword(keyword):
@@ -149,13 +149,12 @@ def get_fmt_from_keyword(keyword):
         checkstr = colname.split('/')
     else:
         checkstr = colname
-
-    if any(x in checkstr.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$']):
+    if any(x in checkstr.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent']):
+        return PCT
+    elif any(x in checkstr.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$']):
         return DOLLAR
     elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole']):
         return WHOLE
-    elif any(x in checkstr.lower() for x in ['sor', 'share', 'requirement', 'pct', 'percent']):
-        return PCT
     elif any(x in checkstr.lower() for x in ['decimal']):
         return DECIMAL
     else:

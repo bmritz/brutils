@@ -460,14 +460,14 @@ def index_to(df, index_on, index_to, inverse=False):
     #totest = pd.Series([1,2,3,4,5,6], pd.MultiIndex.from_product([[1,2],[1,2,3]], names=['a', 'b']), name='spend')
     if df.index.nlevels > 1:
         # multi-index case
-        w = df.unstack(index_on, fill_value=0.0)
+        w = df.sort_index().unstack(index_on)
         if w.columns.nlevels > 1:
             # multiindex dataframe case
             b = w.xs(index_to, axis=1, level=-1)
         else:
             # mutliindex series case
             b = w.xs(index_to, axis=1)
-        r = (w.div(b, axis=0, level=0).stack()*100.).reorder_levels(level_labs)
+        r = (w.div(b, axis=0, level=0).sort_index(axis=1).stack(dropna=False)*100.).reorder_levels(level_labs)
     else:
         # single index case (both df and series)
         r = df.div(df.xs(index_to))*100

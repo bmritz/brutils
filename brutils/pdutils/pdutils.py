@@ -153,7 +153,7 @@ def get_fmt_from_keyword(keyword):
         checkstr = colname
     if any(x in checkstr.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent']):
         return PCT
-    elif any(x in checkstr.lower() for x in ['decimal', 'eq units', 'equivalized units']) :
+    elif any(x in checkstr.lower() for x in ['decimal', 'eq unit', 'equivalized unit']) :
         return DECIMAL
     elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole']):
         return WHOLE

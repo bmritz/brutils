@@ -130,9 +130,11 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
         indexes must have the same names to be merged
         index of result will be the overlap of both indicies in the order of the left index
         """
+        assert len(set(left.columns).intersection(set(right.columns))) == 0
         index_names = [name for name in left.index.names if name in right.index.names]
         return pd.merge(left.reset_index(), right.reset_index(), 
-                                how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator).set_index(index_names)
+                                on=index_names, how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)\
+                .set_index(list(OrderedDict.fromkeys(left.index.names + right.index.names)))
 
 DOLLAR = "${:,.2f}"
 WHOLE = "{:,.0f}"

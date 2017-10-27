@@ -150,14 +150,14 @@ def get_fmt_from_keyword(keyword):
     elif '/' in colname:
         checkstr = colname.split('/')
     else:
-        checkstr = colname
-    if any(x in checkstr.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent']):
+        checkstr = [colname]
+    if any(x in c.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent'] for c in checkstr):
         return PCT
-    elif any(x in checkstr.lower() for x in ['decimal', 'eq unit', 'equivalized unit']) :
+    elif any(x in c.lower() for x in ['decimal', 'eq unit', 'equivalized unit'] for c in checkstr) :
         return DECIMAL
-    elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole']):
+    elif any(x in c.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole'] for c in checkstr):
         return WHOLE
-    elif any(x in checkstr.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$']):
+    elif any(x in c.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$'] for c in checkstr):
         return DOLLAR
     else:
         return "{}"
@@ -201,7 +201,7 @@ def fmt_series_retail(series, keyword=None, force=True):
         if 'per' in colname:
             checkstr = colname.split('per')[0]
         elif '/' in colname:
-            checkstr = colname.split('/')
+            checkstr = colname.split('/')[0]
         else:
             checkstr = colname
 

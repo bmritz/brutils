@@ -148,7 +148,7 @@ def get_fmt_from_keyword(keyword):
     if 'per' in colname:
         checkstr = colname.split('per')[0]
     elif '/' in colname:
-        checkstr = colname.split('/')
+        checkstr = colname.split('/')[0]
     else:
         checkstr = [colname]
     if any(x in c.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent'] for c in checkstr):
@@ -208,7 +208,7 @@ def fmt_series_retail(series, keyword=None, force=True):
         if (series<=1).all():
             return series.map(PCT.format)
         else:
-            fmt = get_fmt_from_keyword(checkstr)
+            fmt = get_fmt_from_keyword(colname)
             if fmt == PCT:
                 assert (series<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
             if fmt != "{}":

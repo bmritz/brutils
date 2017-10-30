@@ -142,6 +142,7 @@ PCT = "{:.1%}"
 DECIMAL = "{0:0.2f}"
 
 def get_fmt_from_keyword(keyword):
+    # TODO: THis still has trouble with W/PL store geo names
     """ return the correct format string from a keyword"""
     colname = copy.copy(keyword)
     # in cases like units/customer, or units per customer, select the first word
@@ -150,14 +151,14 @@ def get_fmt_from_keyword(keyword):
     elif '/' in colname:
         checkstr = colname.split('/')[0]
     else:
-        checkstr = [colname]
-    if any(x in c.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent'] for c in checkstr):
+        checkstr = colname
+    if any(x in checkstr.lower() for x in ['sor', 'shr', 'share', 'requirement', 'pct', 'percent', "%"]):
         return PCT
-    elif any(x in c.lower() for x in ['decimal', 'eq unit', 'equivalized unit'] for c in checkstr) :
+    elif any(x in checkstr.lower() for x in ['decimal', 'eq unit', 'equivalized unit']) :
         return DECIMAL
-    elif any(x in c.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole'] for c in checkstr):
+    elif any(x in checkstr.lower() for x in ['unit', 'visit', 'customer', 'index', 'count', 'cnt', 'whole']):
         return WHOLE
-    elif any(x in c.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$'] for c in checkstr):
+    elif any(x in checkstr.lower() for x in ['sales', 'spend', 'dollar', 'revenue', '$']):
         return DOLLAR
     else:
         return "{}"
@@ -198,29 +199,27 @@ def fmt_series_retail(series, keyword=None, force=True):
         return series
     else:
         # in cases like units/customer, or units per customer, select the first word
-        if 'per' in colname:
-            checkstr = colname.split('per')[0]
-        elif '/' in colname:
-            checkstr = colname.split('/')[0]
-        else:
-            checkstr = colname
+        # if 'per' in colname:
+        #     checkstr = colname.split('per')[0]
+        # elif '/' in colname:
+        #     checkstr = colname.split('/')[0]
+        # else:
+        #     checkstr = colname
 
-        if (series<=1).all():
-            return series.map(PCT.format)
+        # if (series<=1).all():
+        #     return series.map(PCT.format)
+        # else:
+        fmt = get_fmt_from_keyword(colname)
+        if fmt != "{}":
+            return series.map(fmt.format)
         else:
-            fmt = get_fmt_from_keyword(colname)
-            if fmt == PCT:
-                assert (series<=1).all(), "Function fmt_col detected a percentage column name but the values were not <= 1."
-            if fmt != "{}":
-                return series.map(fmt.format)
-            else:
-                if force:
-                    if np.issubdtype(series.dtype, np.integer):
-                        return series.map(WHOLE.format)
-                    if np.issubdtype(series.dtype, np.float):
-                        return series.map(DECIMAL.format)
-                logging.warn("The series name or keyword was not found in the lookup, returning original series")
-                return series
+            if force:
+                if np.issubdtype(series.dtype, np.integer):
+                    return series.map(WHOLE.format)
+                if np.issubdtype(series.dtype, np.float):
+                    return series.map(DECIMAL.format)
+            logging.warn("The series name or keyword was not found in the lookup, returning original series")
+            return series
 
 def chunk_col_values(filename, column, delimiter=",", sorted=True, maxkeys=1):
     """

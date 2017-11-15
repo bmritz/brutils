@@ -147,7 +147,7 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
         index_names = [name for name in left.index.names if name in right.index.names]
         return pd.merge(left.reset_index(), right.reset_index(), 
                                 on=index_names, how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)\
-                .set_index(list(collections.OrderedDict.fromkeys(left.index.names + right.index.names)))
+                .set_index(list(OrderedDict.fromkeys(left.index.names + right.index.names)))
 
 
 def iter_index_tuples(df):

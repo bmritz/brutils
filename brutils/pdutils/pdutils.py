@@ -130,12 +130,45 @@ def merge_on_multiindex(left, right, how="left", sort=False, suffixes=("_x", "_y
         indexes must have the same names to be merged
         index of result will be the overlap of both indicies in the order of the left index
         """
-        assert len(set(left.columns).intersection(set(right.columns))) == 0
+        try:
+            left_cols = set(left.columns)
+        except AttributeError:
+            left = left.to_frame()
+            return merge_on_multiindex(left, right, how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)
+
+        try:
+            right_cols = set(right.columns)
+        except AttributeError:
+            right = right.to_frame()
+            return merge_on_multiindex(left, right, how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)
+        
+
+        assert len(left_cols.intersection(right_cols)) == 0
         index_names = [name for name in left.index.names if name in right.index.names]
         return pd.merge(left.reset_index(), right.reset_index(), 
                                 on=index_names, how=how, sort=sort, suffixes=suffixes, copy=copy, indicator=indicator)\
-                .set_index(list(OrderedDict.fromkeys(left.index.names + right.index.names)))
+                .set_index(list(collections.OrderedDict.fromkeys(left.index.names + right.index.names)))
 
+
+def iter_index_tuples(df):
+    iter_index = (tuple(zip(df.index.names, x)) for x in df.index.values)
+    return iter_index
+
+def semijoin_index(df1, df2):
+    """ filter the rows of df1 by the rows in df2 through the index
+
+    return every row in df1 where the index of df1 matches the index of df2 on every level in df2
+    every level of  df2 must be in df1
+
+    """
+    common_levels = set(df1.index.names).intersection(df2.index.names)
+    assert all(name in common_levels for name in df2.index.names)
+
+    iter_index_1 = df1.reset_index([c for c in df1.index.names if c not in common_levels]).pipe(iter_index_tuples)
+    iter_index_2 = list(iter_index_tuples(df2))
+    mask = [x in iter_index_2 for x in iter_index_1]
+    return df1[mask]
+    
 DOLLAR = "${:,.2f}"
 WHOLE = "{:,.0f}"
 PCT = "{:.1%}"
